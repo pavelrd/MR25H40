@@ -5,8 +5,10 @@
 
 /**
  *
- * @brief The AbstractMR25H40 class
- *
+ * @brief Для работы с микросхемой SPI MRAM памяти модели MR25H40 фирмы EVERSPIN
+ *         включает в себя:
+ *           MR25H40     - содержит реализацию под железо
+ *           testMR25H40 - для тестирования
  */
 
 class AbstractMR25H40

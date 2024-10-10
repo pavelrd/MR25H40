@@ -6,7 +6,7 @@
 
 /**
  *
- * @brief The MR25H40 class
+ * @brief Реализация под "железо" класса AbstractMR25H40
  *
  */
 

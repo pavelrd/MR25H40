@@ -29,11 +29,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS "-Werror=all -Werror=return-type -Werror=float-equal -Werror=uninitialized -Werror=unused-variable -Werror=switch -Werror=implicit-fallthrough")
 
-add_executable(untitled2 main.cpp mr25h40.cpp spi.cpp io.hpp mr25h40.hpp spi.hpp abstractmr25h40.hpp testmr25h40.hpp testmr25h40.cpp test.cpp test.hpp checksum.hpp checksum.cpp)
+add_executable(untitled2 main.cpp spi.cpp io.hpp spi.hpp  test.cpp test.hpp checksum.hpp checksum.cpp)
+
+add_subdirectory("mr25h40")
+
+target_link_libraries(untitled2 PUBLIC libmr25h40)
 
 add_subdirectory("port/PC")
 
 add_subdirectory("port/SAM4E")
+
+target_include_directories(libmr25h40 PUBLIC ${CMAKE_SOURCE_DIR}/mr25h40 )
 
 if ( ${HARDWARE_PLATFORM} MATCHES "PC" )
 
