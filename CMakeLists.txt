@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(untitled2 LANGUAGES CXX)
 
 # Выбор аппаратной платформы для которой компилировать программу
-# Может быть либо PC  либо SAM4E
+# Может быть либо PC либо SAM4E
 
 set(HARDWARE_PLATFORM "PC")
 
@@ -11,6 +11,8 @@ if( ${HARDWARE_PLATFORM} MATCHES "SAM4E" )
 
     set(CMAKE_C_COMPILER arm-none-eabi-gcc.exe)
     set(CMAKE_CXX_COMPILER arm-none-eabi-g++.exe)
+
+    # плюс добавить путь до линкера, пути до библиотек
 
 endif()
 
@@ -24,7 +26,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #   - забыт return
 #   - прямое сравнение float, типа ==
 #   - есть неинициализированная или неиспользуемая переменная
-#   - в конструкции switch забыт break
+#   - в switch не обрабатывается элемент перечисления
+#   - в switch забыт break(implicit-fallthrough)
 #
 
 set(CMAKE_CXX_FLAGS "-Werror=all -Werror=return-type -Werror=float-equal -Werror=uninitialized -Werror=unused-variable -Werror=switch -Werror=implicit-fallthrough")
@@ -50,3 +53,10 @@ elseif( ${HARDWARE_PLATFORM} MATCHES "SAM4E" )
     target_link_libraries(untitled2 PUBLIC libportsam4e)
 
 endif()
+
+find_package(Doxygen)
+if (DOXYGEN_FOUND)
+  set(DOXYGEN_GENERATE_HTML YES)
+  set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/docs)
+  doxygen_add_docs(doc ${CMAKE_SOURCE_DIR})
+endif(DOXYGEN_FOUND)
