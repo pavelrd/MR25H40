@@ -84,7 +84,6 @@ void SPI8::init(uint32_t _speed)
 
         if( ( hardwareCS != UNSELECTED_HARDWARE_CS ) && ( cs != IO::UNUSED) )
         {
-            IO::use(cs);
             IO::high(cs);
             IO::out(cs);
         }
@@ -93,19 +92,54 @@ void SPI8::init(uint32_t _speed)
 
     }
 
+    isInitialized = true;
+
 }
 
 /**
- * @brief Передать(сдвинуть регистр) один байт
  *
- * @param data передаваемый байт данных
- *
- * @return возвращаемый байт данных
+ * @brief Деконфигурация ножек, настроенных ранее методом init()
  *
  */
 
+void SPI8::deinit()
+{
+
+    if( mode == SOFTWARE_MODE )
+    {
+
+        IO::in(mosi);
+        IO::in(sck);
+        IO::in(cs);
+
+        IO::unuse(miso);
+        IO::unuse(mosi);
+        IO::unuse(sck);
+        IO::unuse(cs);
+
+    }
+    else
+    {
+        _deinit();
+    }
+
+    isInitialized = false;
+
+}
+
+/**
+ * @brief Передать и принять один байт
+ * @param data байт для передачи
+ * @return принятый байт
+*/
+
 uint8_t SPI8::transfer(uint8_t data)
 {
+
+    if( !isInitialized )
+    {
+        return -1;
+    }
 
     if( mode == SOFTWARE_MODE )
     {
@@ -142,14 +176,23 @@ uint8_t SPI8::transfer(uint8_t data)
 }
 
 /**
- * @brief read
- * @param buffer
- * @param size
- * @return
+ *
+ * @brief Прочитать данные с spi
+ *
+ * @param buffer данные
+ * @param size размер данных для чтения в байтах
+ *
+ * @return 0 - данные прочитаны успешно, иначе -1
+ *
  */
 
 int SPI8::read(void* buffer, uint32_t size)
 {
+
+    if( !isInitialized )
+    {
+        return -1;
+    }
 
     if( mode == SOFTWARE_MODE )
     {
@@ -168,14 +211,23 @@ int SPI8::read(void* buffer, uint32_t size)
 }
 
 /**
- * @brief write
- * @param buffer
- * @param size
- * @return
+ *
+ * @brief Записать данные по spi
+ *
+ * @param buffer данные
+ * @param size размер данных для записи в байтах
+ *
+ * @return 0 - данные записаны успешно, иначе -1
+ *
  */
 
 int SPI8::write( void* buffer, uint32_t size )
 {
+
+    if( !isInitialized )
+    {
+        return -1;
+    }
 
     if( mode == SOFTWARE_MODE )
     {
@@ -194,7 +246,9 @@ int SPI8::write( void* buffer, uint32_t size )
 }
 
 /**
- * @brief SPI8::enable
+ *
+ * @brief Включение чипа, вызывается перед transfer, read, write
+ *
  */
 
 void SPI8::enable()
@@ -206,7 +260,9 @@ void SPI8::enable()
 }
 
 /**
- * @brief SPI8::disable
+ *
+ * @brief Выключеине чипа, вызывается после transfer, read, write
+ *
  */
 
 void SPI8::disable()
@@ -216,16 +272,3 @@ void SPI8::disable()
         IO::high(cs);
     }
 }
-
-/*
- *
- *     int read(void* buffer, uint32_t size);
-    uint32_t read();
-    uint8_t* pBuffer = (uint8_t*)buffer;
-
-    for( uint32_t i = 0 ; i < bytesForRead; i++ )
-    {
-        *pBuffer = spi->transfer(0x00);
-        pBuffer++;
-    }
-    */

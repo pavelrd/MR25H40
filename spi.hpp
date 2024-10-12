@@ -5,7 +5,8 @@
 #include <stdint.h>
 
 /**
- * @brief The SPI8 class
+ * @brief Обертка для медленного программного SPI или работы с быстрыми аппаратными
+ *         SPI модулями
  */
 
 class SPI8
@@ -35,6 +36,8 @@ public:
     SPI8( IO::PIN _miso, IO::PIN _mosi, IO::PIN _sck, IO::PIN _cs );
 
     void init(uint32_t _speed);
+
+    void deinit();
 
     uint8_t transfer(uint8_t data);
 
@@ -66,11 +69,14 @@ private:
 
     CHIP_SELECT hardwareCS = UNSELECTED_HARDWARE_CS;
 
-    uint32_t speed;
+    uint32_t speed = 0;
+
+    bool     isInitialized = false;
 
 // Платформо-зависимые функции
 
     void _init();
+    void _deinit();
 
     uint8_t _transfer(uint8_t data);
 

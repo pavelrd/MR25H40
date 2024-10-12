@@ -2,13 +2,26 @@
 
 #include <iostream>
 
+/**
+ * @brief Заглушка
+ */
+
 void SPI8::_init()
 {
     std::cout << "SPI8::_init()" << std::endl;
 }
 
 /**
- * @brief SPI::transfer
+ * @brief Заглушка
+ */
+
+void SPI8::_deinit()
+{
+    std::cout << "SPI8::_deinit()" << std::endl;
+}
+
+/**
+ * @brief Заглушка
  * @param data
  * @return
 */
@@ -23,10 +36,10 @@ uint8_t SPI8::_transfer(uint8_t data)
 }
 
 /**
- * @brief read
+ * @brief Заглушка
  * @param buffer
  * @param size
- * @return
+ * @return всегда 0
  */
 
 int SPI8::_read(void* buffer, uint32_t size)
@@ -44,7 +57,7 @@ int SPI8::_read(void* buffer, uint32_t size)
 }
 
 /**
- * @brief write
+ * @brief Заглушка
  * @param buffer
  * @param size
  * @return

@@ -17,25 +17,28 @@ public:
 
     MR25H40( SPI8* _spi, IO::PIN _writeProtect, IO::PIN _hold );
 
+    void init();
+
+    void deinit();
+
     int read( void* buffer, uint32_t numberOfBytes, uint32_t address ) override;
 
     int write( void* buffer, uint32_t numberOfBytes, uint32_t address ) override;
 
-    void setProtect(PROTECT_MODES mode) override;
+    int setProtect(PROTECT_MODES mode) override;
 
-    void sleep() override;
-    void wake() override;
+    int sleep() override;
+    int wake() override;
 
-    void hold() override;
-
-    void writeStatus() override;
+    int hold() override;
 
 private:
 
     IO::PIN writeProtectLine = IO::UNUSED;
     IO::PIN holdLine         = IO::UNUSED;
 
-    SPI8* spi = 0;
+    SPI8* spi       = 0;
+    bool  sleepMode = false;
 
     enum COMMANDS
     {
@@ -49,8 +52,8 @@ private:
         C_EXIT_SLEEP_MODE       = 0xAB
     };
 
-    void writeEnable();
-    void writeDisable();
+    int writeEnable();
+    int writeDisable();
 
 };
 

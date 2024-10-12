@@ -46,12 +46,15 @@ private:
 
     struct PIN_DESCRIPTION
     {
-        uint32_t port;
-        uint32_t pin;
-        bool     used;
+        const uint32_t port;
+        const uint32_t  pin;
     };
 
-    // static const PIN_DESCRIPTION dpinToHardwarePin[1];
+    PIN_DESCRIPTION _getHardwarePin(PIN pin);
+
+    static bool usedPins[255];
+
+    static const PIN_DESCRIPTION dpinToHardwarePin[255];
 
 };
 

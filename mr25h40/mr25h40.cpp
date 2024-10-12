@@ -18,25 +18,77 @@ MR25H40::MR25H40(SPI8* _spi, IO::PIN _writeProtect, IO::PIN _hold ) //
 }
 
 /**
- * @brief MR25H40::writeEnable
+ * @brief Настройка ножек специфичных для данной микросхемы
  */
 
-void MR25H40::writeEnable()
+void MR25H40::init()
 {
-   spi->enable();
-   spi->transfer(C_WRITE_ENABLE);
-   spi->disable();
+
+    IO::use(writeProtectLine);
+    IO::low(writeProtectLine);
+    IO::out(writeProtectLine);
+
+    IO::use(holdLine);
+    IO::high(holdLine);
+    IO::out(holdLine);
+
 }
 
 /**
- * @brief MR25H40::writeDisable
+ *
+ * @brief Деконфигурация ножек, настроенных ранее методом init()
+ *
  */
 
-void MR25H40::writeDisable()
+void MR25H40::deinit()
 {
+
+    IO::in(writeProtectLine);
+    IO::unuse(writeProtectLine);
+
+    IO::in(holdLine);
+    IO::unuse(holdLine);
+
+}
+
+/**
+ * @brief Разрешить запись в незащищенные с помощью метода setProtect() области памяти
+ */
+
+int MR25H40::writeEnable()
+{
+
+    if( sleepMode )
+    {
+        return -1;
+    }
+
+   spi->enable();
+   spi->transfer(C_WRITE_ENABLE);
+   spi->disable();
+
+   return 0;
+
+}
+
+/**
+ * @brief Запретить запись во все области памяти
+ */
+
+int MR25H40::writeDisable()
+{
+
+    if( sleepMode )
+    {
+        return -1;
+    }
+
     spi->enable();
     spi->transfer(C_WRITE_DISABLE);
     spi->disable();
+
+    return 0;
+
 }
 
 /**
@@ -46,8 +98,29 @@ void MR25H40::writeDisable()
  *
  */
 
-void MR25H40::setProtect(PROTECT_MODES mode)
+int MR25H40::setProtect(PROTECT_MODES mode)
 {
+
+    if( sleepMode )
+    {
+        return -1;
+    }
+
+    IO::high(writeProtectLine);
+
+    uint8_t status = 0;
+
+    switch(mode)
+    {
+        case PROTECT_MODE_NONE          : status |= 0 << 2; break;
+        case PROTECT_MODE_UPPER_QUARTER : status |= 1 << 2; break;
+        case PROTECT_MODE_UPPER_HALF    : status |= 2 << 2; break;
+        case PROTECT_MODE_ALL           : status |= 3 << 2; break;
+    }
+
+    IO::low(writeProtectLine);
+
+    return 0;
 
 }
 
@@ -68,10 +141,12 @@ void MR25H40::setProtect(PROTECT_MODES mode)
 int MR25H40::read( void* buffer, uint32_t numberOfBytes, uint32_t address )
 {
 
-    if( ( buffer == 0 ) || (address > MEMORY_SIZE_IN_BYTES) )
+    if( ( buffer == 0 ) || (address > MEMORY_SIZE_IN_BYTES) || (sleepMode) )
     {
         return -1;
     }
+
+    spi->enable();
 
     spi->transfer(C_READ_DATA_BYTES);
 
@@ -82,6 +157,8 @@ int MR25H40::read( void* buffer, uint32_t numberOfBytes, uint32_t address )
     uint32_t bytesForRead = ( address + numberOfBytes ) > MEMORY_SIZE_IN_BYTES ? MEMORY_SIZE_IN_BYTES - address : numberOfBytes;
 
     spi->read(buffer, bytesForRead);
+
+    spi->disable();
 
     return bytesForRead;
 
@@ -106,7 +183,8 @@ int MR25H40::write( void* buffer, uint32_t numberOfBytes, uint32_t address )
 
     if( ( buffer == 0 )                                        ||
         ( address > MEMORY_SIZE_IN_BYTES )                     ||
-        ( ( address + numberOfBytes ) > MEMORY_SIZE_IN_BYTES )
+        ( ( address + numberOfBytes ) > MEMORY_SIZE_IN_BYTES ) ||
+        ( sleepMode )
        )
     {
         return -1;
@@ -114,19 +192,17 @@ int MR25H40::write( void* buffer, uint32_t numberOfBytes, uint32_t address )
 
     writeEnable();
 
+    spi->enable();
+
     spi->transfer(C_WRITE_DATA_BYTES);
 
     spi->transfer( (address >> 16) & 0xFF );
     spi->transfer( (address >> 8) & 0xFF  );
     spi->transfer( address & 0xFF );
 
-    uint8_t* pBuffer = (uint8_t*) buffer;
+    spi->write(buffer, numberOfBytes);
 
-    for( uint32_t i = 0 ; i < numberOfBytes; i++ )
-    {
-        spi->transfer(*pBuffer);
-        pBuffer++;
-    }
+    spi->disable();
 
     writeDisable();
 
@@ -135,20 +211,45 @@ int MR25H40::write( void* buffer, uint32_t numberOfBytes, uint32_t address )
 }
 
 /**
- * @brief MR25H40::sleep
+ * @brief Перейти в режим сна. В режиме сна
+ *        блокируется выполнение всех методов, кроме wake()!
+ *        По причине: "The only valid command following SLEEP mode entry is a WAKE command"
  */
 
-void MR25H40::sleep()
+int MR25H40::sleep()
 {
+
+    spi->enable();
+    spi->transfer(C_ENTER_SLEEP_MODE);
+    spi->disable();
+
+    // через 3 мкс энергопотребление должно упать до примерно 15 микроампер
+
+    sleepMode = true;
+
+    return 0;
 
 }
 
 /**
- * @brief MR25H40::wake
+ * @brief Выйти из режима сна
  */
 
-void MR25H40::wake()
+int MR25H40::wake()
 {
+
+    spi->enable();
+    spi->transfer(C_EXIT_SLEEP_MODE);
+    spi->disable();
+
+    // Ожидание Trdp > 400 us
+    //
+    // Обертка Thread::delay(1) которая под Freertos использует vTaskDelay(1) а под PC std::thread и std::chrono
+    //
+
+    sleepMode = false;
+
+    return 0;
 
 }
 
@@ -156,16 +257,7 @@ void MR25H40::wake()
  * @brief MR25H40::hold
  */
 
-void MR25H40::hold()
+int MR25H40::hold()
 {
-
-}
-
-/**
- * @brief MR25H40::writeStatus
- */
-
-void MR25H40::writeStatus()
-{
-
+    return 0;
 }

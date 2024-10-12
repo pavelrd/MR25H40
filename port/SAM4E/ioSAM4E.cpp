@@ -1,7 +1,7 @@
 #include "io.hpp"
 
-#include "asf.h" // берется из состава atmel software framework
- // либо напрямую через регистры
+#include "asf.h" // берется из состава atmel/microchip software framework
+                 //  программы atmel/microchip studio
 
 IO::IO()
 {
@@ -15,28 +15,25 @@ IO::IO()
 
 void IO::use(PIN pin)
 {
-    uint8_t port = pinToHardware[pinNumber].port;
 
-    if ( port == IOPORT_PIOA )
+    uint8_t port = dpinToHardwarePin[pinNumber].port;
+
+    switch(port)
     {
-        sysclk_enable_peripheral_clock(ID_PIOA); // либо SCB->
+        case IOPORT_PIOA : sysclk_enable_peripheral_clock(ID_PIOA); break; // либо PMC->PMC_PCER1 = 1 << ID_PIOA; и по аналогии далее
+        case IOPORT_PIOB : sysclk_enable_peripheral_clock(ID_PIOB); break;
+        case IOPORT_PIOC : sysclk_enable_peripheral_clock(ID_PIOC); break;
+        case IOPORT_PIOD : sysclk_enable_peripheral_clock(ID_PIOD); break;
+        case IOPORT_PIOE : sysclk_enable_peripheral_clock(ID_PIOE); break;
+
     }
-    else if( port == IOPORT_PIOB )
-    {
-        sysclk_enable_peripheral_clock(ID_PIOB);
-    }
-    else if( port == IOPORT_PIOC )
-    {
-        sysclk_enable_peripheral_clock(ID_PIOC);
-    }
-    else if( port == IOPORT_PIOD )
-    {
-        sysclk_enable_peripheral_clock(ID_PIOD);
-    }
-    else if( port == IOPORT_PIOE )
-    {
-        sysclk_enable_peripheral_clock(ID_PIOE);
-    }
+
+    usedPins[pin] = true;
+
+    (Pio *)dpinToHardwarePin[pin].port->PIO_ODR |= (1<<dpinToHardwarePin[pin].pin);
+
+    (Pio *)dpinToHardwarePin[pin].port->PIO_PER |= (1<<dpinToHardwarePin[pin].pin);
+
 }
 
 /**
@@ -50,61 +47,89 @@ void IO::use(PIN pin)
 void IO::unuse(PIN pin)
 {
 
+    uint8_t port = dpinToHardwarePin[pinNumber].port;
+
+    switch(port)
+    {
+        case IOPORT_PIOA : sysclk_enable_peripheral_clock(ID_PIOA); break; // либо PMC->PMC_PCER1 = 1 << ID_PIOA; и по аналогии далее
+        case IOPORT_PIOB : sysclk_enable_peripheral_clock(ID_PIOB); break;
+        case IOPORT_PIOC : sysclk_enable_peripheral_clock(ID_PIOC); break;
+        case IOPORT_PIOD : sysclk_enable_peripheral_clock(ID_PIOD); break;
+        case IOPORT_PIOE : sysclk_enable_peripheral_clock(ID_PIOE); break;
+
+    }
+
+    usedPins[pin] = false;
+
 }
 
 /**
- * @brief IO::high
- * @param pin
+ * @brief Переключение ножки в высокое состояние(VCC)
+ * @param pin ножка контроллера
  */
 
 void IO::high(PIN pin)
 {
-
+    (Pio *)dpinToHardwarePin[pin].port->PIO_SODR |= (1<<dpinToHardwarePin[pin].pin);
 }
 
 /**
- * @brief IO::low
- * @param pin
+ * @brief Переключение ножки в низкое состояние(GND)
+ * @param pin ножка контроллера
  */
 
 void IO::low(PIN pin)
 {
-
+    (Pio *)dpinToHardwarePin[pin].port->PIO_CODR |= (1<<dpinToHardwarePin[pin].pin);
 }
 
 /**
- * @brief IO::read
- * @param pin
+ * @brief Чтение текущего состояния ножки
+ * @param pin ножка контроллера
+ * @return true - 1(VCC), false - 0(GND)
  */
 
-void IO::read(PIN pin)
+bool IO::read(PIN pin)
 {
+
+    if ( ( (Pio *)dpinToHardwarePin[pin].port->PIO_PDSR ) & (1<<dpinToHardwarePin[pin].pin) )
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 
 }
 
 /**
- * @brief IO::in
- * @param pin
+ * @brief Переключение ножки на вход
+ * @param pin ножка контроллера
  */
 
 void IO::in(PIN pin)
 {
 
+    (Pio *)dpinToHardwarePin[pin].port->PIO_ODR |= (1<<dpinToHardwarePin[pin].pin);
+
 }
 
 /**
- * @brief IO::out
- * @param pin
+ * @brief Переключение ножки на выход
+ * @param pin ножка контроллера
  */
 
 void IO::out(PIN pin)
 {
 
+    (Pio *)dpinToHardwarePin[pin].port->PIO_OER |= (1<<dpinToHardwarePin[pin].pin);
+
 }
 
 // Данная таблица уже была, взята из моего проекта. Также еще требуется таблица задействованных ножек для фукнции use/unuse.
 
-IO::PIN_DESCRIPTION IO::dpinToHardwarePin[] =
+IO::PIN_DESCRIPTION IO::dpinToHardwarePin[255] =
 {
     { 0, 0 }, // добавлен только для выравнивания. чтобы при обращении к элементу 1 выбирался действительно первый элемент а не нулевой
     { IOPORT_PIOD, 0 },  // 1
@@ -252,3 +277,5 @@ IO::PIN_DESCRIPTION IO::dpinToHardwarePin[] =
     { 0, 0 },            // 143 - VDDIO
     { IOPORT_PIOB, 13 }  // 144
 };
+
+bool IO::usedPins[255] = {0};
