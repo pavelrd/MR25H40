@@ -39,7 +39,7 @@ public:
 
     void deinit();
 
-    uint8_t transfer(uint8_t data);
+    int transfer(uint8_t data, uint8_t *out);
 
     int read(void* buffer, uint32_t size);
 
@@ -48,6 +48,8 @@ public:
     void enable();
 
     void disable();
+
+    bool isEnabled();
 
 private:
 
@@ -78,7 +80,7 @@ private:
     void _init();
     void _deinit();
 
-    uint8_t _transfer(uint8_t data);
+    int _transfer(uint8_t data, uint8_t* out);
 
     int _read(void* buffer, uint32_t size);
 

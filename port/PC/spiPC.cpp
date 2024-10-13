@@ -26,7 +26,7 @@ void SPI8::_deinit()
  * @return
 */
 
-uint8_t SPI8::_transfer(uint8_t data)
+int SPI8::_transfer(uint8_t data, uint8_t* out)
 {
 
     std::cout << "SPI8::transfer(" << data << ")" << std::endl;

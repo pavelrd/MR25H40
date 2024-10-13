@@ -112,7 +112,7 @@ void SPI8::_deinit()
  * @return принятый байт
 */
 
-uint8_t SPI8::_transfer(uint8_t data)
+int SPI8::_transfer(uint8_t data, uint8_t* out)
 {
 
    if( SPI_OK != spi_write(SPI_MASTER_BASE, &data, 0, 0) )
@@ -122,14 +122,21 @@ uint8_t SPI8::_transfer(uint8_t data)
 
    /* Wait transfer done. */
 
-   // Вместо этого можно: xSemaphoreTake( spiSemaphore, portMAX_DELAY );
+   // Вместо этого можно: xSemaphoreTake( spiSemaphore, portMAX_DELAY ); вместо portMAX_DELAY сделать таймаут и
+   //                      если достигли таймаута сбросить контроллер SPI и запустить его заново, вернуть -1
+
    while ((spi_read_status(SPI_MASTER_BASE) & SPI_SR_RDRF) == 0);
 
    uint8_t outData = 0;
 
    if( SPI_OK == spi_read(SPI_MASTER_BASE, &outData, &uc_pcs) )
    {
-       return outData;
+
+       if ( out != 0 )
+       {
+           *out = outData;
+       }
+       return 0;
    }
 
    return 0;
@@ -150,7 +157,7 @@ uint8_t SPI8::_transfer(uint8_t data)
 int SPI8::_read(void* buffer, uint32_t size)
 {
 
-    // Можно/нужно переделать на DMA
+    /// \todo Можно/нужно переделать на DMA
 
     uint8_t *p_buffer = buffer;
 
@@ -190,7 +197,7 @@ int SPI8::_read(void* buffer, uint32_t size)
 int SPI8::_write( void* buffer, uint32_t size )
 {
 
-    // Можно/нужно переделать на DMA
+    /// \todo Можно/нужно переделать на DMA
 
     uint8_t *p_buffer = buffer;
 

@@ -39,12 +39,19 @@ public:
 
     virtual int write( void* buffer, uint32_t numberOfBytes, uint32_t address ) = 0;
 
+    virtual int fill( uint8_t value, uint32_t startAddress, uint32_t numberOfBytes ) = 0;
+
+    virtual int writeEnable() = 0;
+
+    virtual int writeDisable() = 0;
+
     virtual int setProtect(PROTECT_MODES mode) = 0;
 
     virtual int sleep() = 0;
     virtual int wake() = 0;
 
     virtual int hold() = 0;
+    virtual int unhold() = 0;
 
 };
 #endif // ABSTRACTMR25H40_H

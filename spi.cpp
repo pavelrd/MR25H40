@@ -133,7 +133,7 @@ void SPI8::deinit()
  * @return принятый байт
 */
 
-uint8_t SPI8::transfer(uint8_t data)
+int SPI8::transfer( uint8_t data, uint8_t* out )
 {
 
     if( !isInitialized )
@@ -163,12 +163,17 @@ uint8_t SPI8::transfer(uint8_t data)
 
         }
 
-        return outData;
+        if( out != 0 )
+        {
+            *out = outData;
+        }
+
+        return 0;
 
     }
     else
     {
-        return _transfer(data);
+        return _transfer(data, out);
     }
 
     return 0;
@@ -198,7 +203,10 @@ int SPI8::read(void* buffer, uint32_t size)
     {
         for(uint32_t i = 0 ; i < size; i++)
         {
-            ((uint8_t*)buffer)[i] = SPI8::transfer(0x00);
+             if( -1 == SPI8::transfer( 0x00, ((uint8_t*)buffer) + i ) )
+             {
+                 return -1;
+             }
         }
     }
     else
@@ -233,7 +241,10 @@ int SPI8::write( void* buffer, uint32_t size )
     {
         for(uint32_t i = 0 ; i < size; i++)
         {
-            SPI8::transfer(((uint8_t*)buffer)[i]);
+            if( -1 == SPI8::transfer( ((uint8_t*)buffer)[i], 0 ) )
+            {
+                return -1;
+            }
         }
     }
     else
@@ -271,4 +282,17 @@ void SPI8::disable()
     {
         IO::high(cs);
     }
+}
+
+/**
+ *
+ * @brief Выбран(включен ли сейчас чип)
+ *
+ * @return true - выбран(линия cs в низком уровне), false - не выбран(линия cs в высоком уровне)
+ *
+ */
+
+bool SPI8::isEnabled()
+{
+    return IO::read(cs);
 }
