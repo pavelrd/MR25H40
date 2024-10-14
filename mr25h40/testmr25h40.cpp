@@ -2,11 +2,7 @@
 
 #include <iostream>
 #include <cstring>
-
-testMR25H40::testMR25H40()
-{
-    ram = new uint8_t[MEMORY_SIZE_IN_BYTES];
-}
+#include <filesystem>
 
 testMR25H40::~testMR25H40()
 {
@@ -18,6 +14,22 @@ testMR25H40::~testMR25H40()
 
 testMR25H40::testMR25H40(std::string dumpFilename)
 {
+
+    if( dumpFilename == "" )
+    {
+        ram = new uint8_t[MEMORY_SIZE_IN_BYTES];
+
+        return;
+    }
+
+    if( !std::filesystem::exists(dumpFilename) )
+    {
+
+        dumpFile.open(dumpFilename, std::ios::out | std::ios::in | std::ios::binary | std::ios::app );
+
+        dumpFile.close();
+
+    }
 
     dumpFile.open(dumpFilename, std::ios::out | std::ios::in | std::ios::binary );
 
@@ -48,13 +60,13 @@ int testMR25H40::read( void* buffer, uint32_t numberOfBytes, uint32_t address )
     else
     {
 
-        dumpFile.seekp(address);
+        dumpFile.seekg(address);
 
         dumpFile.read((char*)buffer, numberOfBytes);
 
     }
 
-    return 0;
+    return numberOfBytes;
 
 }
 
@@ -171,7 +183,19 @@ int testMR25H40::fill(uint8_t value, uint32_t address, uint32_t numberOfBytes )
 
 }
 
-int testMR25H40::setProtect(PROTECT_MODES mode)
+/**
+ * @brief testMR25H40::protect
+ * @param mode
+ * @return
+ */
+
+int testMR25H40::protect( PROTECT_MODES* mode )
+{
+    *mode = currentProtectMode;
+    return -1;
+}
+
+int testMR25H40::setProtect(PROTECT_MODES mode, bool srwd)
 {
     if(!isInitialized)
     {

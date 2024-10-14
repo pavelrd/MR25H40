@@ -38,6 +38,8 @@
  *          char writeBuf[3] = {1,2,3};
  *          char readBuf[3]  = {0};
  *
+ *          memory.writeEnable();
+ *
  *          memory.write(writeBuf, 3, 0);
  *
  *          memory.read(readBuf, 3, 0);
@@ -66,7 +68,9 @@ public:
 
     int writeDisable() override;
 
-    int setProtect(PROTECT_MODES mode) override;
+    int protect( PROTECT_MODES* mode ) override;
+
+    int setProtect(PROTECT_MODES mode, bool srwd) override;
 
     int sleep() override;
     int wake() override;
@@ -94,6 +98,18 @@ private:
         C_WRITE_DATA_BYTES      = 0x02,
         C_ENTER_SLEEP_MODE      = 0xB9,
         C_EXIT_SLEEP_MODE       = 0xAB
+    };
+
+    enum STATUS_BITS
+    {
+        STATUS_BIT_SRWD     = 7,
+        STATUS_BIT_UNUSED_6 = 6,
+        STATUS_BIT_UNUSED_5 = 5,
+        STATUS_BIT_UNUSED_4 = 4,
+        STATUS_BIT_BP1      = 3,
+        STATUS_BIT_BP0      = 2,
+        STATUS_BIT_WEL      = 1,
+        STATUS_BIT_UNUSED_0 = 0
     };
 
 };

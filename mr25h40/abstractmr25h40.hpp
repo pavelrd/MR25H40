@@ -27,10 +27,10 @@ public:
 
     enum PROTECT_MODES
     {
-        PROTECT_MODE_NONE,
-        PROTECT_MODE_UPPER_QUARTER,
-        PROTECT_MODE_UPPER_HALF,
-        PROTECT_MODE_ALL
+        PROTECT_MODE_NONE          = 0,
+        PROTECT_MODE_UPPER_QUARTER = 1,
+        PROTECT_MODE_UPPER_HALF    = 2,
+        PROTECT_MODE_ALL           = 3
     };
 
     virtual void init() = 0;
@@ -45,7 +45,9 @@ public:
 
     virtual int writeDisable() = 0;
 
-    virtual int setProtect(PROTECT_MODES mode) = 0;
+    virtual int protect( PROTECT_MODES* mode ) = 0;
+
+    virtual int setProtect(PROTECT_MODES mode, bool srwd = false) = 0;
 
     virtual int sleep() = 0;
     virtual int wake() = 0;

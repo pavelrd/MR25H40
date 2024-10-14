@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <ctime>
+#include <cstring>
 
 struct Bureau
 {
@@ -24,31 +25,40 @@ struct randTest
     uint16_t len;
 };
 
-randTest randTestTable[32] = {0};
+#define RANDOM_TABLE_SIZE 32
+#define BLOCK_SIZE        4096
 
-void rt( AbstractMR25H40* memory, uint32_t startSize, uint32_t endSize )
+static randTest randTestTable[RANDOM_TABLE_SIZE] = {0};
+
+uint8_t block[BLOCK_SIZE] = {0};
+
+/**
+ *
+ * @brief Тестирование произвольного доступа к памяти
+ *         Заполняет RANDOM_TABLE_SIZE ячеек в памяти в произвольных местах
+ *         случайными данными размером size
+ *
+ * @param memory
+ * @param size
+ *
+ */
+
+void memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t size )
 {
+
+    randTestTable[0].addr = 0;
 
     //std::srand(timestamp);
 
     // Заполнение randTestTable
 
-    for( ;; )
+    for( uint32_t i = 0 ; i < RANDOM_TABLE_SIZE; i++ )
     {
 
+        randTestTable[i].addr = std::rand() % AbstractMR25H40::MEMORY_SIZE_IN_BYTES;
+        randTestTable[i].len  = (std::rand() % size) > 12 ? 1 : 1;
+
         // i.addr = std::rand() % AbstractMR25H40::MEMORY_SIZE_IN_BYTES;
-
-        uint32_t size = std::rand();
-
-        if(size < startSize)
-        {
-            size += startSize;
-        }
-
-        if( size > endSize )
-        {
-            size %= endSize;
-        }
 
         // i.len  = size;
 
@@ -65,30 +75,29 @@ void rt( AbstractMR25H40* memory, uint32_t startSize, uint32_t endSize )
 
 /**
  *
+ *
+ * @todo Не работает для не четных size, поправить!
+ *
  * @brief Заполняет память элементами указанной длины
  *         значения в элементах перечисляются последовательно
  *         пока не случается переполнения, затем снова.
  *         После полного заполнения считывает память и проверяет было
  *         ли прочитано, то что ранее записано.
  *
- *         Если startSize == endSize == 1 то: 00 01 02 03 FF ...
+ *         Если size == 1 то: 00 01 02 03 FF ...
  *
- *         Если startSize == endSize == 2 то: 00 01 00 02 00 03 ... FF FF ....
+ *         Если size 2 то: 00 00 01 01 02 02 ... FF FF
  *           и.т.д
  *
- *         Если startSize != endSize, то память будет заполняться кусками
- *          случайного размера от начального до конечного, например:
- *
- * @param memory    - память
- * @param startSize - начальный размер кусков которыми будет заполняться память
- * @param endSize   - конечный размер кусков которыми будет заполняться память
+ * @param memory        - память
+ * @param size          - размер кусков которыми будет заполняться память, максиум BLOCK_SIZE
  * @param randomNumbers - true - заполнять случайными числами, false - заполнять последовательными числами
  *
  * @return 0 - тест пройден успешно, иначе -1
  *
  */
 
-int test_memory_fill(AbstractMR25H40* memory, uint32_t startSize, uint32_t endSize, bool randomNumbers )
+int test_memory_fill( AbstractMR25H40* memory, uint32_t size, bool randomNumbers, bool reverse )
 {
 
     time_t timestamp = 0;
@@ -99,19 +108,40 @@ int test_memory_fill(AbstractMR25H40* memory, uint32_t startSize, uint32_t endSi
         std::srand(timestamp);
     }
 
-    uint64_t counter = 0;
+    uint8_t counter = 0;
 
-    for( auto i = 0 ; i < AbstractMR25H40::MEMORY_SIZE_IN_BYTES; i+= startSize )
+    for( auto addressCounter = 0 ; addressCounter < AbstractMR25H40::MEMORY_SIZE_IN_BYTES; addressCounter+= size )
     {
 
         if(randomNumbers)
         {
-            counter = std::rand();
+            for( uint32_t blockCounter = 0 ; blockCounter < size; blockCounter++ )
+            {
+                // Не оптимально, так как каждый раз теряется по 3 случайных байта!
+                block[blockCounter] = std::rand() % 256;
+            }
+        }
+        else
+        {
+            for( uint32_t blockCounter = 0 ; blockCounter < size; blockCounter++ )
+            {
+                block[blockCounter] = counter;
+            }
         }
 
-        if( 0 > memory->write( &counter, startSize , i ) )
+        if( reverse )
         {
-            return -1;
+            if( 0 > memory->write( block, size , AbstractMR25H40::MEMORY_SIZE_IN_BYTES - addressCounter - 1) )
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            if( 0 > memory->write( block, size , addressCounter ) )
+            {
+                return -1;
+            }
         }
 
         counter++;
@@ -125,24 +155,45 @@ int test_memory_fill(AbstractMR25H40* memory, uint32_t startSize, uint32_t endSi
         std::srand(timestamp);
     }
 
-    for( auto i = 0 ; i < AbstractMR25H40::MEMORY_SIZE_IN_BYTES; i+= startSize )
+    std::memset(block, 0, size);
+
+    for( auto addressCounter = 0 ; addressCounter < AbstractMR25H40::MEMORY_SIZE_IN_BYTES; addressCounter+= size )
     {
 
-        uint64_t readCounter = 0;
-
-        if( 0 > memory->read( &readCounter, startSize , i ) )
+        if( reverse )
         {
-            return -1;
+            if( (int)size != memory->read( block, size , AbstractMR25H40::MEMORY_SIZE_IN_BYTES - addressCounter - 1 ) )
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            if( (int)size != memory->read( block, size , addressCounter ) )
+            {
+                return -1;
+            }
         }
 
         if(randomNumbers)
         {
-            counter = std::rand();
+            for( uint32_t blockCounter = 0 ; blockCounter < size; blockCounter++ )
+            {
+                if( block[blockCounter] != std::rand() % 256 )
+                {
+                    return -1;
+                }
+            }
         }
-
-        if( counter != readCounter )
+        else
         {
-            return -1;
+            for( uint32_t blockCounter = 0 ; blockCounter < size; blockCounter++ )
+            {
+                if ( block[blockCounter] != counter )
+                {
+                    return -1;
+                }
+            }
         }
 
         counter++;
@@ -213,21 +264,21 @@ int test_memory_fill_structures(AbstractMR25H40* memory, bool randomNumbers )
 
     std::srand(timestamp);
 
-    for( uint32_t i = 0 ; i < writedStructs; i++ )
+    for( uint32_t currentStructIndex = 0 ; currentStructIndex < writedStructs; currentStructIndex++ )
     {
 
         Bureau bure = { 0, 0, 0, 0 };
 
-        uint32_t currentReadPosition = writedStructs * (sizeof(Bureau) + sizeof(checksumType));
+        uint32_t currentReadPosition = currentStructIndex * (sizeof(Bureau) + sizeof(checksumType));
 
-        if( 0 > memory->read( &bure, sizeof(Bureau), currentReadPosition ) )
+        if( sizeof(Bureau) != memory->read( &bure, sizeof(Bureau), currentReadPosition ) )
         {
             return -1;
         }
 
         checksumType checksum = 0;
 
-        if ( 0 > memory->read( &checksum, sizeof(checksumType), currentReadPosition + sizeof(Bureau) ) )
+        if ( sizeof(checksumType) != memory->read( &checksum, sizeof(checksumType), currentReadPosition + sizeof(Bureau) ) )
         {
             return -1;
         }
@@ -248,10 +299,13 @@ int test_memory_fill_structures(AbstractMR25H40* memory, bool randomNumbers )
         else
         {
 
-            if ( bure.head_qty   != i     ) return -1;
-            if ( bure.math_qty   != i + 1 ) return -1;
-            if ( bure.prog_qty   != i + 2 ) return -1;
-            // if ( bure.salary_sum != i + 3 ) return -1;
+            if ( bure.prog_qty   != currentStructIndex     ) return -1;
+            if ( bure.math_qty   != currentStructIndex + 1 ) return -1;
+            if ( bure.head_qty   != currentStructIndex + 2 ) return -1;
+            if ( ((uint32_t)bure.salary_sum) != currentStructIndex + 3 )
+            {
+                return -1; /// @todo fabs... > EPSILON
+            }
 
         }
 

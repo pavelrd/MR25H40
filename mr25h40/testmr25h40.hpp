@@ -16,8 +16,6 @@ class testMR25H40 : public AbstractMR25H40
 {
 public:
 
-    testMR25H40();
-
     ~testMR25H40();
 
     testMR25H40( std::string dumpFilename );
@@ -36,7 +34,9 @@ public:
 
     int writeDisable() override;
 
-    int setProtect( PROTECT_MODES mode ) override;
+    int protect( PROTECT_MODES* mode ) override;
+
+    int setProtect( PROTECT_MODES mode, bool srwd ) override;
 
     int sleep() override;
     int wake() override;

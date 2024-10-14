@@ -111,12 +111,56 @@ int MR25H40::writeDisable()
 
 /**
  *
- * @brief Задать режим защиты памяти
+ * @brief MR25H40::protect
+ *
  * @param mode
+ * @return -1 ошибка
  *
  */
 
-int MR25H40::setProtect(PROTECT_MODES mode)
+int MR25H40::protect( PROTECT_MODES* mode )
+{
+
+    if( ( sleepMode ) || ( !isInitialized ) )
+    {
+        return -1;
+    }
+
+    uint8_t status = 0;
+
+    if( -1 == spi->transfer( C_READ_STATUS_REGISTER, 0 ) )
+    {
+        return -1;
+    }
+
+    if( -1 == spi->transfer( 0, &status ) )
+    {
+        return -1;
+    }
+
+    switch( 0xFF & (status >> STATUS_BIT_BP0) )
+    {
+        case PROTECT_MODE_NONE          : *mode = PROTECT_MODE_NONE;          break;
+        case PROTECT_MODE_UPPER_QUARTER : *mode = PROTECT_MODE_UPPER_QUARTER; break;
+        case PROTECT_MODE_UPPER_HALF    : *mode = PROTECT_MODE_UPPER_HALF;    break;
+        case PROTECT_MODE_ALL           : *mode = PROTECT_MODE_ALL;           break;
+        default : return -1;
+    }
+
+    return 0;
+
+}
+
+/**
+ *
+ * @brief Задать режим защиты памяти
+ *
+ * @param mode выбор какую область памяти защищать от записи
+ * @param srwd true - запретить запись в регистр статуса, false - запись в регистр статуса разрешена
+ *
+ */
+
+int MR25H40::setProtect( PROTECT_MODES mode, bool srwd )
 {
 
     if( ( sleepMode ) || ( !isInitialized ) || (!writeEnabled) )
@@ -124,46 +168,71 @@ int MR25H40::setProtect(PROTECT_MODES mode)
         return -1;
     }
 
-    IO::high(writeProtectLine);
-
     uint8_t status = 0;
 
     if( -1 == spi->transfer( C_READ_STATUS_REGISTER, 0 ) )
     {
-        IO::low(writeProtectLine);
         return -1;
     }
 
     if( -1 == spi->transfer( 0, &status ) )
     {
-        IO::low(writeProtectLine);
         return -1;
+    }
+
+    if( status & (1<<STATUS_BIT_SRWD) )
+    {
+        IO::high(writeProtectLine);
     }
 
     status &= 0xF3;
 
     switch(mode)
     {
-        case PROTECT_MODE_NONE          : status |= 0 << 2; break;
-        case PROTECT_MODE_UPPER_QUARTER : status |= 1 << 2; break;
-        case PROTECT_MODE_UPPER_HALF    : status |= 2 << 2; break;
-        case PROTECT_MODE_ALL           : status |= 3 << 2; break;
+        case PROTECT_MODE_NONE          : status |= PROTECT_MODE_NONE          << STATUS_BIT_BP0; break;
+        case PROTECT_MODE_UPPER_QUARTER : status |= PROTECT_MODE_UPPER_QUARTER << STATUS_BIT_BP0; break;
+        case PROTECT_MODE_UPPER_HALF    : status |= PROTECT_MODE_UPPER_HALF    << STATUS_BIT_BP0; break;
+        case PROTECT_MODE_ALL           : status |= PROTECT_MODE_ALL           << STATUS_BIT_BP0; break;
     }
 
+    if( srwd )
+    {
+        status |= 1 << STATUS_BIT_SRWD;
+    }
+    else
+    {
+
+        status &= ~(1<<STATUS_BIT_SRWD);
+
+        if( IO::read(writeProtectLine) )
+        {
+            IO::low(writeProtectLine);
+        }
+
+    }
 
     if( -1 == spi->transfer( C_WRITE_STATUS_REGISTER, 0 ) )
     {
-        IO::low(writeProtectLine);
+        if( status & (1<<STATUS_BIT_SRWD) )
+        {
+            IO::low(writeProtectLine);
+        }
         return -1;
     }
 
     if( -1 == spi->transfer( status, 0 ) )
     {
-        IO::low(writeProtectLine);
+        if( status & (1<<STATUS_BIT_SRWD) )
+        {
+            IO::low(writeProtectLine);
+        }
         return -1;
     }
 
-    IO::low(writeProtectLine);
+    if( status & (1<<STATUS_BIT_SRWD) )
+    {
+        IO::low(writeProtectLine);
+    }
 
     return 0;
 

@@ -8,25 +8,36 @@
 
 #include "test.hpp"
 
+
 int main()
 {
 
     std::cout << "Memory test started!" << std::endl;
 
-    testMR25H40 memory("mr25h40_test_dump.bin"); // &spi
+    testMR25H40 memory("mr25h40_test_dump.bin"); // ""
 
     memory.init();
 
-    std::cout << std::endl << "\nStart memory test(fill uint32_t numbers)..." << std::endl;
+    memory.writeEnable();
 
-    if( 0 == test_memory_fill(&memory, 4, true) )
+    //memory.setProtect(AbstractMR25H40::PROTECT_MODE_UPPER_HALF);
+
+// -------
+
+    for( uint32_t i = 4; i < 16 ; i += 1 )
     {
-        std::cout << "Memory test(fill uint32_t numbers) completed success" << std::endl;
+        std::cout << std::endl << "\nStart memory test(fill uint32_t numbers)..." << std::endl;
+        if( 0 == test_memory_fill(&memory, i ) )
+        {
+            std::cout << "Memory test(fill uint32_t numbers) completed success" << std::endl;
+        }
+        else
+        {
+            std::cout << "Memory test(fill uint32_t numbers) FAILED!!!" << std::endl;
+        }
     }
-    else
-    {
-        std::cout << "Memory test(fill uint32_t numbers) FAILED!!!" << std::endl;
-    }
+
+// -------
 
     std::cout << std::endl << "Start memory test(fill structures)..." << std::endl;
 
@@ -50,6 +61,9 @@ int main()
         std::cout << "Memory test FAILED!!!" << std::endl;
     }
 
+    // void memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t size )
+
+
     /* Для проверки на "железе"
 
     SPI8 spi( IO::D1, IO::D2, IO::D3, IO::D4 );  //  SPI spi(SPI::HARDWARE_MODE, IO::D4); SPI spi(SPI::HARDWARE_MODE, SPI::HARDWARE_CS0);
@@ -57,6 +71,10 @@ int main()
     spi->init(1000000);
 
     MR25H40 memory2( &spi, IO::D5, IO::D6 ); // &spi
+
+    memory2.init();
+
+    memory2.writeEnable();
 
     uint32_t numberOfSuccessTests    = 0;
 
