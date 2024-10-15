@@ -32,25 +32,25 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS "-Werror=all -Werror=return-type -Werror=float-equal -Werror=uninitialized -Werror=unused-variable -Werror=switch -Werror=implicit-fallthrough")
 
-add_executable(untitled2 main.cpp spi.cpp io.hpp spi.hpp  test.cpp test.hpp checksum.hpp checksum.cpp)
+add_executable(untitled2 main.cpp spi.cpp io.hpp spi.hpp)
 
 add_subdirectory("mr25h40")
 
-target_link_libraries(untitled2 PUBLIC libmr25h40)
+target_link_libraries(untitled2 PUBLIC mr25h40)
 
 add_subdirectory("port/PC")
 
 add_subdirectory("port/SAM4E")
 
-target_include_directories(libmr25h40 PUBLIC ${CMAKE_SOURCE_DIR}/mr25h40 )
+target_include_directories(mr25h40 PUBLIC ${CMAKE_SOURCE_DIR}/mr25h40 )
 
 if ( ${HARDWARE_PLATFORM} MATCHES "PC" )
 
-    target_link_libraries(untitled2 PUBLIC libportpc)
+    target_link_libraries(untitled2 PUBLIC portpc)
 
 elseif( ${HARDWARE_PLATFORM} MATCHES "SAM4E" )
 
-    target_link_libraries(untitled2 PUBLIC libportsam4e)
+    target_link_libraries(untitled2 PUBLIC portsam4e)
 
 endif()
 
@@ -60,3 +60,15 @@ if (DOXYGEN_FOUND)
   set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/docs)
   doxygen_add_docs(doc ${CMAKE_SOURCE_DIR})
 endif(DOXYGEN_FOUND)
+
+add_subdirectory("googletest")
+
+target_link_libraries(untitled2 PUBLIC gtest)
+
+# target_include_directories(gtest PUBLIC ${CMAKE_SOURCE_DIR}/googletest )
+
+add_subdirectory("tests")
+
+target_link_libraries(untitled2 PUBLIC tests)
+
+target_include_directories(tests PUBLIC ${CMAKE_SOURCE_DIR}/tests )

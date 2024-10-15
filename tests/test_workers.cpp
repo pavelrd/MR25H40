@@ -1,23 +1,4 @@
-#include "test.hpp"
-#include "checksum.hpp"
-
-#include <iostream>
-#include <ctime>
-#include <cstring>
-
-struct Bureau
-{
-#if defined(PC_PLATFORM)
-    uint32_t prog_qty; // Размер задается в зависимости от разрядности целевого контроллера.
-                       //  иначе при тестировании на ПК эта переменная будет размером 64 бита, а на
-                       //  целевом контроллере размер будет другой, например 32 бита.
-#else
-    size_t   prog_qty;
-#endif
-    uint32_t math_qty;
-    uint8_t  head_qty;
-    float    salary_sum;
-};
+#include "tests.hpp"
 
 struct randTest
 {
@@ -26,7 +7,6 @@ struct randTest
 };
 
 #define RANDOM_TABLE_SIZE 32
-#define BLOCK_SIZE        4096
 
 static randTest randTestTable[RANDOM_TABLE_SIZE] = {0};
 
@@ -43,7 +23,7 @@ uint8_t block[BLOCK_SIZE] = {0};
  *
  */
 
-void memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t size )
+void memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t minSize, uint32_t maxSize )
 {
 
     randTestTable[0].addr = 0;
@@ -110,7 +90,9 @@ int test_memory_fill( AbstractMR25H40* memory, uint32_t size, bool randomNumbers
 
     uint8_t counter = 0;
 
-    for( auto addressCounter = 0 ; addressCounter < AbstractMR25H40::MEMORY_SIZE_IN_BYTES; addressCounter+= size )
+    uint32_t addressMaximum = (( AbstractMR25H40::MEMORY_SIZE_IN_BYTES / size ) * size);
+
+    for( uint32_t addressCounter = 0 ; addressCounter < addressMaximum; addressCounter+= size )
     {
 
         if(randomNumbers)
@@ -131,7 +113,7 @@ int test_memory_fill( AbstractMR25H40* memory, uint32_t size, bool randomNumbers
 
         if( reverse )
         {
-            if( 0 > memory->write( block, size , AbstractMR25H40::MEMORY_SIZE_IN_BYTES - addressCounter - 1) )
+            if( 0 > memory->write( block, size , AbstractMR25H40::MEMORY_SIZE_IN_BYTES - addressCounter - size) )
             {
                 return -1;
             }
@@ -157,12 +139,12 @@ int test_memory_fill( AbstractMR25H40* memory, uint32_t size, bool randomNumbers
 
     std::memset(block, 0, size);
 
-    for( auto addressCounter = 0 ; addressCounter < AbstractMR25H40::MEMORY_SIZE_IN_BYTES; addressCounter+= size )
+    for( uint32_t addressCounter = 0 ; addressCounter < addressMaximum; addressCounter+= size )
     {
 
         if( reverse )
         {
-            if( (int)size != memory->read( block, size , AbstractMR25H40::MEMORY_SIZE_IN_BYTES - addressCounter - 1 ) )
+            if( (int)size != memory->read( block, size , AbstractMR25H40::MEMORY_SIZE_IN_BYTES - addressCounter - size ) )
             {
                 return -1;
             }
@@ -262,12 +244,22 @@ int test_memory_fill_structures(AbstractMR25H40* memory, bool randomNumbers )
 
     }
 
-    std::srand(timestamp);
+    if( randomNumbers )
+    {
+        std::srand(timestamp);
+    }
 
-    for( uint32_t currentStructIndex = 0 ; currentStructIndex < writedStructs; currentStructIndex++ )
+    uint32_t currentStructIndex = 0;
+
+    Bureau bure = { 0, 0, 0, 0 };
+
+    for(  ; currentStructIndex < writedStructs; currentStructIndex++ )
     {
 
-        Bureau bure = { 0, 0, 0, 0 };
+        bure.head_qty = 0;
+        bure.math_qty = 0;
+        bure.prog_qty = 0;
+        bure.salary_sum = 0;
 
         uint32_t currentReadPosition = currentStructIndex * (sizeof(Bureau) + sizeof(checksumType));
 
@@ -290,18 +282,18 @@ int test_memory_fill_structures(AbstractMR25H40* memory, bool randomNumbers )
         else if( randomNumbers )
         {
 
-            if ( bure.head_qty   != std::rand() ) return -1;
-            if ( bure.math_qty   != (uint32_t) std::rand() ) return -1;
-            if ( bure.prog_qty   != (uint32_t) std::rand() ) return -1;
-            // if ( bure.salary_sum != std::rand() ) return -1;
+            if ( bure.head_qty               != std::rand()  % 256     ) return -1;
+            if ( bure.math_qty               != (uint32_t) std::rand() ) return -1;
+            if ( bure.prog_qty               != (uint32_t) std::rand() ) return -1;
+            if ( ((uint32_t)bure.salary_sum) != (uint32_t)std::rand()  ) return -1;
 
         }
         else
         {
 
-            if ( bure.prog_qty   != currentStructIndex     ) return -1;
-            if ( bure.math_qty   != currentStructIndex + 1 ) return -1;
-            if ( bure.head_qty   != currentStructIndex + 2 ) return -1;
+            if ( bure.prog_qty   != currentStructIndex                 ) return -1;
+            if ( bure.math_qty   != currentStructIndex + 1             ) return -1;
+            if ( bure.head_qty   != ( currentStructIndex + 2 ) % 256   ) return -1;
             if ( ((uint32_t)bure.salary_sum) != currentStructIndex + 3 )
             {
                 return -1; /// @todo fabs... > EPSILON

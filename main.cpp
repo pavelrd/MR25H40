@@ -4,65 +4,32 @@
 #include "spi.hpp"
 
 #include "mr25h40.hpp"
-#include "testmr25h40.hpp"
 
-#include "test.hpp"
+#include "tests.hpp"
 
+/// Чтобы выбрать отдельные тесты передать следующий параметр
+///  при запуске программы
+///
+/// --gtest_filter=[fill_numbers*|fill_structs*|random_access*|control_methods*]
+///
+///  Пример:
+///
+///  --gtest_filter=fill_structs*
+///
 
-int main()
+int main(int argc, char **argv)
 {
 
-    std::cout << "Memory test started!" << std::endl;
+    ::testing::InitGoogleTest(&argc, argv);
 
-    testMR25H40 memory("mr25h40_test_dump.bin"); // ""
-
-    memory.init();
-
-    memory.writeEnable();
-
-    //memory.setProtect(AbstractMR25H40::PROTECT_MODE_UPPER_HALF);
-
-// -------
-
-    for( uint32_t i = 4; i < 16 ; i += 1 )
+    if ( 0 == RUN_ALL_TESTS() )
     {
-        std::cout << std::endl << "\nStart memory test(fill uint32_t numbers)..." << std::endl;
-        if( 0 == test_memory_fill(&memory, i ) )
-        {
-            std::cout << "Memory test(fill uint32_t numbers) completed success" << std::endl;
-        }
-        else
-        {
-            std::cout << "Memory test(fill uint32_t numbers) FAILED!!!" << std::endl;
-        }
-    }
-
-// -------
-
-    std::cout << std::endl << "Start memory test(fill structures)..." << std::endl;
-
-    if( 0 == test_memory_fill_structures(&memory, false) )
-    {
-        std::cout << "Memory test(fill structures) completed success" << std::endl;
+        std::cout << "ALL test completed!" << std::endl;
     }
     else
     {
-        std::cout << "Memory test FAILED!!!" << std::endl;
+        std::cout << "Tests FAILED" << std::endl;
     }
-
-    std::cout << std::endl << "Start memory test(fill random numbers)..." << std::endl;
-
-    if( 0 == test_memory_fill_structures(&memory, true) )
-    {
-        std::cout << "Memory test(fill random numbers) completed success" << std::endl;
-    }
-    else
-    {
-        std::cout << "Memory test FAILED!!!" << std::endl;
-    }
-
-    // void memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t size )
-
 
     /* Для проверки на "железе"
 
