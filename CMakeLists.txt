@@ -65,6 +65,8 @@ add_subdirectory("googletest")
 
 target_link_libraries(untitled2 PUBLIC gtest)
 
+include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+
 # target_include_directories(gtest PUBLIC ${CMAKE_SOURCE_DIR}/googletest )
 
 add_subdirectory("tests")

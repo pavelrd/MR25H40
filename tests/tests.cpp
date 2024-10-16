@@ -15,7 +15,7 @@ TEST( fill_numbers, sequence_straight )
 
     memory.writeEnable();
 
-    for( uint32_t i = MIN_WRITE_BLOCK_IN_TEST; i < MAX_WRITE_BLOCK_LENGTH_IN_TEST ; i += BLOCK_STEP_IN_TEST )
+    for( uint32_t i = MIN_WRITE_BLOCK_IN_TEST; i < MAX_WRITE_BLOCK_IN_TEST ; i += BLOCK_STEP_IN_TEST )
     {
 
         ASSERT_EQ( 0, test_memory_fill(&memory, i ) );
@@ -39,7 +39,7 @@ TEST( fill_numbers, sequence_reverse )
 
     memory.writeEnable();
 
-    for( uint32_t i = MIN_WRITE_BLOCK_IN_TEST; i < MAX_WRITE_BLOCK_LENGTH_IN_TEST ; i += BLOCK_STEP_IN_TEST )
+    for( uint32_t i = MIN_WRITE_BLOCK_IN_TEST; i < MAX_WRITE_BLOCK_IN_TEST ; i += BLOCK_STEP_IN_TEST )
     {
 
         ASSERT_EQ( 0, test_memory_fill(&memory, i, false, true ) );
@@ -63,7 +63,7 @@ TEST( fill_numbers, random_straight )
 
     memory.writeEnable();
 
-    for( uint32_t i = MIN_WRITE_BLOCK_IN_TEST; i < MAX_WRITE_BLOCK_LENGTH_IN_TEST ; i += BLOCK_STEP_IN_TEST )
+    for( uint32_t i = MIN_WRITE_BLOCK_IN_TEST; i < MAX_WRITE_BLOCK_IN_TEST ; i += BLOCK_STEP_IN_TEST )
     {
 
         ASSERT_EQ( 0, test_memory_fill(&memory, i, true, false ) );
@@ -87,7 +87,7 @@ TEST( fill_numbers, random_reverse )
 
     memory.writeEnable();
 
-    for( uint32_t i = MIN_WRITE_BLOCK_IN_TEST; i < MAX_WRITE_BLOCK_LENGTH_IN_TEST ; i += BLOCK_STEP_IN_TEST )
+    for( uint32_t i = MIN_WRITE_BLOCK_IN_TEST; i < MAX_WRITE_BLOCK_IN_TEST ; i += BLOCK_STEP_IN_TEST )
     {
 
         ASSERT_EQ( 0, test_memory_fill(&memory, i, true, true ) );
@@ -142,13 +142,15 @@ TEST( fill_structs, random_numbers )
 TEST( random_access, fill_sequence )
 {
 
+    ASSERT_EQ(0,1);
+
     testMR25H40 memory(DUMP_FILENAME);
 
     memory.init();
 
     memory.writeEnable();
 
-    ASSERT_EQ( 0, memory_test_random_access_fill( memory, MIN_WRITE_BLOCK_IN_TEST, MAX_WRITE_BLOCK_IN_TEST ) );
+    ASSERT_EQ( 0, memory_test_random_access_fill( &memory, MIN_WRITE_BLOCK_IN_TEST, MAX_WRITE_BLOCK_IN_TEST ) );
 
 }
 
@@ -158,12 +160,12 @@ TEST( random_access, fill_sequence )
 
 TEST(control_methods, protect_set)
 {
-
+/*
     SPI8 spi( IO::D1, IO::D2, IO::D3, IO::D4 );  //  SPI spi(SPI::HARDWARE_MODE, IO::D4); SPI spi(SPI::HARDWARE_MODE, SPI::HARDWARE_CS0);
 
     spi.init(1000000);
 
-    AbstractMR25H40 memory2( &spi, IO::D5, IO::D6 ); // &spi
+    MR25H40 memory2( &spi, IO::D5, IO::D6 ); // &spi
 
     memory2.init();
 
@@ -191,6 +193,9 @@ TEST(control_methods, protect_set)
     }
 
     memory2.writeDisable();
+    */
+
+    ASSERT_EQ(0,1);
 
 }
 
@@ -200,5 +205,5 @@ TEST(control_methods, protect_set)
 
 TEST(control_methods, protect_work)
 {
-
+    ASSERT_EQ(0,1);
 }

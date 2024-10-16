@@ -16,17 +16,17 @@
 
 #include "abstractmr25h40.hpp"
 
-#include <gtest/gtest.h>
+#include <googletest/googletest/include/gtest/gtest.h>
 
 #define TEST_REPORT_FILENAME "test_report.txt"
 
-#define DUMP_FILENAME "mr25h40_test_dump.bin" // "mr25h40_test_dump.bin"
+#define DUMP_FILENAME "" // "mr25h40_test_dump.bin"
 
-#define MIN_WRITE_BLOCK_IN_TEST        1
-#define MAX_WRITE_BLOCK_LENGTH_IN_TEST 128
-#define BLOCK_STEP_IN_TEST             1
+#define MIN_WRITE_BLOCK_IN_TEST   1
+#define MAX_WRITE_BLOCK_IN_TEST 128
+#define BLOCK_STEP_IN_TEST        1
 
-#define BLOCK_SIZE MAX_WRITE_BLOCK_LENGTH_IN_TEST
+#define BLOCK_SIZE MAX_WRITE_BLOCK_IN_TEST
 
 struct Bureau
 {
@@ -42,8 +42,8 @@ struct Bureau
     float    salary_sum;
 };
 
-void memory_test_random_access_fill(AbstractMR25H40* memory, uint32_t minSize , uint32_t maxSize);
-int test_memory_fill( AbstractMR25H40* memory, uint32_t size, bool randomNumbers, bool reverse );
+int memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t minSize, uint32_t maxSize );
+int test_memory_fill( AbstractMR25H40* memory, uint32_t size, bool randomNumbers=false, bool reverse=false );
 int test_memory_fill_structures(AbstractMR25H40* memory, bool randomNumbers );
 
 #endif

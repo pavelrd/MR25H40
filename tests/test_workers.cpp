@@ -23,7 +23,7 @@ uint8_t block[BLOCK_SIZE] = {0};
  *
  */
 
-void memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t minSize, uint32_t maxSize )
+int memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t minSize, uint32_t maxSize )
 {
 
     randTestTable[0].addr = 0;
@@ -35,8 +35,8 @@ void memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t minSize, 
     for( uint32_t i = 0 ; i < RANDOM_TABLE_SIZE; i++ )
     {
 
-        randTestTable[i].addr = std::rand() % AbstractMR25H40::MEMORY_SIZE_IN_BYTES;
-        randTestTable[i].len  = (std::rand() % size) > 12 ? 1 : 1;
+        //randTestTable[i].addr = std::rand() % AbstractMR25H40::MEMORY_SIZE_IN_BYTES;
+        //randTestTable[i].len  = (std::rand() % size) > 12 ? 1 : 1;
 
         // i.addr = std::rand() % AbstractMR25H40::MEMORY_SIZE_IN_BYTES;
 
@@ -50,6 +50,8 @@ void memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t minSize, 
     {
 
     }
+
+    return 0;
 
 }
 
