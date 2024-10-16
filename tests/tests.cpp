@@ -142,8 +142,6 @@ TEST( fill_structs, random_numbers )
 TEST( random_access, fill_sequence )
 {
 
-    ASSERT_EQ(0,1);
-
     testMR25H40 memory(DUMP_FILENAME);
 
     memory.init();
@@ -160,12 +158,8 @@ TEST( random_access, fill_sequence )
 
 TEST(control_methods, protect_set)
 {
-/*
-    SPI8 spi( IO::D1, IO::D2, IO::D3, IO::D4 );  //  SPI spi(SPI::HARDWARE_MODE, IO::D4); SPI spi(SPI::HARDWARE_MODE, SPI::HARDWARE_CS0);
 
-    spi.init(1000000);
-
-    MR25H40 memory2( &spi, IO::D5, IO::D6 ); // &spi
+    testMR25H40 memory2(DUMP_FILENAME); // &spi
 
     memory2.init();
 
@@ -193,17 +187,49 @@ TEST(control_methods, protect_set)
     }
 
     memory2.writeDisable();
-    */
-
-    ASSERT_EQ(0,1);
 
 }
 
 /**
- * @brief Проверка работоспособности режима защиты памяти
+ * @brief Проверка работоспособности режима защиты памяти, методов setProtect
  */
 
 TEST(control_methods, protect_work)
 {
-    ASSERT_EQ(0,1);
+
+    testMR25H40 memory2(DUMP_FILENAME); // &spi
+
+    memory2.init();
+
+    ASSERT_EQ( 0, memory2.setProtect( AbstractMR25H40::PROTECT_MODE_ALL, false ) );
+
+    uint8_t test[5] = {1,2,3,4,5};
+
+    ASSERT_NE( 0, memory2.write(test, 5, 123) );
+
+    ASSERT_EQ( 0, memory2.setProtect( AbstractMR25H40::PROTECT_MODE_NONE, false ) );
+
+    ASSERT_EQ( 0, memory2.write(test, 5, 123) );
+
+}
+
+/**
+ * @brief Проверка работоспособности режима защиты от записи, метода writeEnable
+ */
+
+TEST(control_methods, write_enable)
+{
+
+    testMR25H40 memory2(DUMP_FILENAME); // &spi
+
+    memory2.init();
+
+    uint8_t test[5] = {1,2,3,4,5};
+
+    ASSERT_NE( 0, memory2.write(test, 5, 123) );
+
+    memory2.writeEnable();
+
+    ASSERT_EQ( 0, memory2.write(test, 5, 123) );
+
 }

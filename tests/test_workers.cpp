@@ -1,4 +1,5 @@
 #include "tests.hpp"
+#include <random>
 
 struct randTest
 {
@@ -6,48 +7,74 @@ struct randTest
     uint16_t len;
 };
 
-#define RANDOM_TABLE_SIZE 32
-
 static randTest randTestTable[RANDOM_TABLE_SIZE] = {0};
 
 uint8_t block[BLOCK_SIZE] = {0};
 
 /**
  *
+ * @todo Пока еще проходит не всегда, требует доработки
+ *
  * @brief Тестирование произвольного доступа к памяти
  *         Заполняет RANDOM_TABLE_SIZE ячеек в памяти в произвольных местах
- *         случайными данными размером size
  *
  * @param memory
  * @param size
  *
  */
 
-int memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t minSize, uint32_t maxSize )
+int memory_test_random_access_fill( AbstractMR25H40* memory, int minSize, int maxSize )
 {
 
-    randTestTable[0].addr = 0;
-
-    //std::srand(timestamp);
+    std::random_device seed;
+    std::mt19937 gen{seed()}; // seed the generator
+    std::uniform_int_distribution<> dist{minSize, maxSize}; // set min and max
 
     // Заполнение randTestTable
 
-    for( uint32_t i = 0 ; i < RANDOM_TABLE_SIZE; i++ )
+    for( randTest& element : randTestTable )
     {
 
-        //randTestTable[i].addr = std::rand() % AbstractMR25H40::MEMORY_SIZE_IN_BYTES;
-        //randTestTable[i].len  = (std::rand() % size) > 12 ? 1 : 1;
-
-        // i.addr = std::rand() % AbstractMR25H40::MEMORY_SIZE_IN_BYTES;
-
-        // i.len  = size;
+        element.addr = std::rand() % AbstractMR25H40::MEMORY_SIZE_IN_BYTES;
+        element.len = dist(gen);
 
     }
 
+    uint8_t counter = 0;
+
+    for( randTest& element : randTestTable )
+    {
+
+        for( uint32_t i = 0; i < element.len; i++ )
+        {
+            memory->fill(counter, element.addr + i, 1);
+            counter += 1;
+        }
+
+    }
+
+    counter = 0;
+
     // -------
 
-    for( ;; )
+    for( randTest& element : randTestTable )
     {
+
+        for( uint32_t i = 0; i < element.len; i++ )
+        {
+
+            uint8_t readValue = 0;
+
+            memory->read(&readValue, 1, element.addr+i);
+
+            if( readValue != counter )
+            {
+                return -1;
+            }
+
+            counter += 1;
+
+        }
 
     }
 

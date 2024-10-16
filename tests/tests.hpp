@@ -26,6 +26,8 @@
 #define MAX_WRITE_BLOCK_IN_TEST 128
 #define BLOCK_STEP_IN_TEST        1
 
+#define RANDOM_TABLE_SIZE 16
+
 #define BLOCK_SIZE MAX_WRITE_BLOCK_IN_TEST
 
 struct Bureau
@@ -42,7 +44,7 @@ struct Bureau
     float    salary_sum;
 };
 
-int memory_test_random_access_fill( AbstractMR25H40* memory, uint32_t minSize, uint32_t maxSize );
+int memory_test_random_access_fill(AbstractMR25H40* memory, int minSize, int maxSize );
 int test_memory_fill( AbstractMR25H40* memory, uint32_t size, bool randomNumbers=false, bool reverse=false );
 int test_memory_fill_structures(AbstractMR25H40* memory, bool randomNumbers );
 

@@ -192,7 +192,7 @@ int testMR25H40::fill(uint8_t value, uint32_t address, uint32_t numberOfBytes )
 int testMR25H40::protect( PROTECT_MODES* mode )
 {
     *mode = currentProtectMode;
-    return -1;
+    return 0;
 }
 
 int testMR25H40::setProtect(PROTECT_MODES mode, bool srwd)
